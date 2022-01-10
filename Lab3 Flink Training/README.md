@@ -12,7 +12,3 @@
 3. HourlyTipsExerxise
 4. ExpiringStateExercise
 
-
-git clone https://github.com/ververica/flink-training.git ververica-flink-training
-cd ververica-flink-training
-./gradlew test shadowJar
