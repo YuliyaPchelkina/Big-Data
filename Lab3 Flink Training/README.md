@@ -1,6 +1,6 @@
 ## Лабораторная 3. Потоковая обработка в Apache Flink
 
-#### Данные: 
+### Данные: 
 - Датасет с данными о поездках такси в Нью-Йорке https://github.com/apache/flink-training/blob/master/README.md#using-the-taxi-data-streams 
 - Файлы nycTaxiFares.gz и nycTaxiRides.gz в папке data https://gitlab.com/ssau.tk.courses/big_data/-/tree/master/data
 - Задания (из репозитория https://github.com/ververica/flink-training-exercises)
