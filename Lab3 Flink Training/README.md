@@ -3,11 +3,12 @@
 Данные: Датасет с данными о поездках такси в Нью-Йорке https://github.com/apache/flink-training/blob/master/README.md#using-the-taxi-data-streams. 
 Файлы nycTaxiFares.gz и nycTaxiRides.gz в папке data https://gitlab.com/ssau.tk.courses/big_data/-/tree/master/data.
 
-
-
-Задания (из репозитория https://github.com/ververica/flink-training-exercises:):
+#### Задания (из репозитория https://github.com/ververica/flink-training-exercises:):
 
 ### 1. RideCleanisingExercise
+Задача состоит в том, чтобы отфильтровать данные о поездках.
+Оставляем только те поездки, которые не выходят за пределы Нью-Йорка (начинаются и заканчиваются внутри города)
+
 
 
 
@@ -16,7 +17,8 @@
 
 
 ### 3. HourlyTipsExerxise
-
+Задача состоит в том, чтобы подсчитать размер чаевых каждого водителя за каждый час. 
+Среди полученных данных находим наибольший результат
 
 
 
