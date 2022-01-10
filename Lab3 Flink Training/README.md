@@ -10,6 +10,15 @@
 Оставляем только те поездки, которые не выходят за пределы Нью-Йорка (начинаются и заканчиваются внутри города)
 
 
+```scala
+    
+    // функция, проверяющая попадают ли данные поездки в область, ограниченную координатами Нью-Йорка
+    def NewY(lon: Float, lat: Float) = !(lon > -73.7 || lon < -74.05) && !(lat > 41.0 || lat < 40.5)
+
+    val filteredRides = rides
+      // отфильтровываем лишние поездки 
+      .filter(ride => NewY(ride.startLon, ride.startLat) && NewY(ride.endLon, ride.endLat))
+```
 
 
 ### 2. RidesAndFaresExercise
