@@ -25,6 +25,8 @@
 ### 2. RidesAndFaresExercise
 Задача состоит в том, чтобы добавить информацию о тарифах.
 
+Цель этого упражнения — объединить записи TaxiRide и TaxiFare для каждой поездки. Необходимо связать событие TaxiRide START для некоторого идентификатора rideId с соответствующим ему TaxiFare. 
+
 В файле RidesAndFaresExercise.scala добавлено описание класса:
 
 ```scala
@@ -126,5 +128,64 @@
 
 ### 4. ExpiringStateExercise
 
+В ExpiringStateExercise.scala было добавлено описание класса:
 
+```scala
+  class EnrichmentFunction extends KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)] {
+    // current value state from the connected stream of rides
+    lazy val rideState: ValueState[TaxiRide] = getRuntimeContext.getState(
+      new ValueStateDescriptor[TaxiRide]("ride", classOf[TaxiRide]))
+    // current value state from the connected stream of fares
+    lazy val fareState: ValueState[TaxiFare] = getRuntimeContext.getState(
+      new ValueStateDescriptor[TaxiFare]("fare", classOf[TaxiFare]))
+
+    // called for each element in the connected stream of rides
+    override def processElement1(ride: TaxiRide,
+                                 context: KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)]#Context,
+                                 out: Collector[(TaxiRide, TaxiFare)]): Unit = {
+      val fare = fareState.value
+      // skip null fares
+      if (fare != null) {
+        context.timerService.deleteEventTimeTimer(ride.getEventTime)
+        out.collect((ride, fare))
+        fareState.clear()
+      }
+      else {
+        rideState.update(ride)
+        context.timerService.registerEventTimeTimer(ride.getEventTime)
+      }
+    }
+
+    // called for each element in the connected stream of fares
+    override def processElement2(fare: TaxiFare,
+                                 context: KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)]#Context,
+                                 out: Collector[(TaxiRide, TaxiFare)]): Unit = {
+      val ride = rideState.value
+      // skip null rides
+      if (ride != null) {
+        context.timerService.deleteEventTimeTimer(ride.getEventTime)
+        out.collect((ride, fare))
+        rideState.clear()
+      }
+      else {
+        fareState.update(fare)
+        context.timerService.registerEventTimeTimer(fare.getEventTime)
+      }
+    }
+
+    // Called when a timer set using TimerService fires
+    override def onTimer(timestamp: Long,
+                         ctx: KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)]#OnTimerContext,
+                         out: Collector[(TaxiRide, TaxiFare)]): Unit = {
+      if (fareState.value != null) {
+        ctx.output(unmatchedFares, fareState.value)
+        fareState.clear()
+      }
+      if (rideState.value != null) {
+        ctx.output(unmatchedRides, rideState.value)
+        rideState.clear()
+      }
+    }
+  }
+```
 
