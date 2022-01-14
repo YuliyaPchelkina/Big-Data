@@ -23,6 +23,45 @@
 
 
 ### 2. RidesAndFaresExercise
+Задача состоит в том, чтобы добавить информацию о тарифах.
+
+В файле RidesAndFaresExercise.scala добавлено описание класса:
+
+```scala
+  class EnrichmentFunction extends RichCoFlatMapFunction[TaxiRide, TaxiFare, (TaxiRide, TaxiFare)] {
+    lazy val rideState: ValueState[TaxiRide] = getRuntimeContext.getState(
+      new ValueStateDescriptor[TaxiRide]("ride", classOf[TaxiRide]))
+    lazy val fareState: ValueState[TaxiFare] = getRuntimeContext.getState(
+      new ValueStateDescriptor[TaxiFare]("fare", classOf[TaxiFare]))
+
+    // вызывается для каждой из поездок
+    override def flatMap1(ride: TaxiRide, out: Collector[(TaxiRide, TaxiFare)]): Unit = {
+      val fare = fareState.value
+      // все, кроме нулевых тарифов
+      if (fare != null) {
+        out.collect((ride, fare))
+        fareState.clear()
+      }
+      else {
+        rideState.update(ride)
+      }
+    }
+
+    // вызывается для каждого тарифа
+    override def flatMap2(fare: TaxiFare, out: Collector[(TaxiRide, TaxiFare)]): Unit = {
+      val ride = rideState.value
+      // все, кроме нулевых поездок
+      if (ride != null) {
+        out.collect((ride, fare))
+        rideState.clear()
+      }
+      else {
+        fareState.update(fare)
+      }
+    }
+
+  }
+```
 
 
 
