@@ -57,7 +57,9 @@ object HourlyTipsExercise {
     // start the data generator
     val fares = env.addSource(fareSourceOrTest(new TaxiFareSource(input, maxDelay, speed)))
 
-    // максимальная сумма чаевых за час
+   // начало изменения кода
+   
+   // максимальная сумма чаевых за час
     val hourlyMax = fares
       .map(fare => (fare.driverId, fare.tip))
       
