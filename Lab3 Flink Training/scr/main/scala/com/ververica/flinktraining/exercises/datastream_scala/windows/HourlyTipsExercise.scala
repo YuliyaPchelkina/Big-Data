@@ -22,6 +22,10 @@ import com.ververica.flinktraining.exercises.datastream_java.utils.ExerciseBase.
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
+import org.apache.flink.streaming.api.windowing.time.Time
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow
+import org.apache.flink.util.Collector
 
 /**
   * The "Hourly Tips" exercise of the Flink training
@@ -53,13 +57,32 @@ object HourlyTipsExercise {
     // start the data generator
     val fares = env.addSource(fareSourceOrTest(new TaxiFareSource(input, maxDelay, speed)))
 
-    throw new MissingSolutionException()
-
-   // print result on stdout
-//    printOrTest(hourlyMax)
-
-    // execute the transformation pipeline
+    // максимальная сумма чаевых за час
+    val hourlyMax = fares
+      .map(fare => (fare.driverId, fare.tip))
+      
+      // ключ по Id водителя
+      .keyBy(_._1)
+      // convert to window stream
+      .timeWindow(Time.hours(1))
+      .reduce(
+        
+        // общее количество всех чаевых
+        (f1, f2) => {
+          (f1._1, f1._2 + f2._2)
+        },
+        new WrapWithWindowInfo()
+      )
+      .timeWindowAll(Time.hours(1))
+      .maxBy(2)
+        
     env.execute("Hourly Tips (scala)")
   }
 
+  class WrapWithWindowInfo() extends ProcessWindowFunction[(Long, Float), (Long, Long, Float), Long, TimeWindow] {
+    override def process(key: Long, context: Context, elements: Iterable[(Long, Float)], out: Collector[(Long, Long, Float)]): Unit = {
+      val sumOfTips = elements.iterator.next()._2
+      out.collect((context.window.getEnd, key, sumOfTips))
+    }
+  }
 }
