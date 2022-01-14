@@ -30,7 +30,18 @@
 Задача состоит в том, чтобы подсчитать размер чаевых каждого водителя за каждый час. 
 Среди полученных данных находим наибольший результат
 
-В в файл HourlyTipsExercise.scala изменена функция main:
+В файле HourlyTipsExercise.scala добавлено описание класса:
+
+```scala
+  class WrapWithWindowInfo() extends ProcessWindowFunction[(Long, Float), (Long, Long, Float), Long, TimeWindow] {
+    override def process(key: Long, context: Context, elements: Iterable[(Long, Float)], out: Collector[(Long, Long, Float)]): Unit = {
+      val sumOfTips = elements.iterator.next()._2
+      out.collect((context.window.getEnd, key, sumOfTips))
+    }
+  }
+```
+
+Изменена функция main:
 
 ```scala
     def main(args: Array[String]) {
@@ -72,16 +83,6 @@
     env.execute("Hourly Tips (scala)")
   }
 
-```
-И добавлено описание класса:
-
-```scala
-  class WrapWithWindowInfo() extends ProcessWindowFunction[(Long, Float), (Long, Long, Float), Long, TimeWindow] {
-    override def process(key: Long, context: Context, elements: Iterable[(Long, Float)], out: Collector[(Long, Long, Float)]): Unit = {
-      val sumOfTips = elements.iterator.next()._2
-      out.collect((context.window.getEnd, key, sumOfTips))
-    }
-  }
 ```
 
 ### 4. ExpiringStateExercise
