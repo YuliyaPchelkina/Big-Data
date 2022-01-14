@@ -7,7 +7,8 @@
 
 ### 1. RideCleanisingExercise
 Задача состоит в том, чтобы отфильтровать данные о поездках.
-Оставляем только те поездки, которые не выходят за пределы Нью-Йорка (начинаются и заканчиваются внутри города)
+Оставляем только те поездки, которые не выходят за пределы Нью-Йорка (начинаются и заканчиваются внутри города).
+
 В в файл RideCleansingExercise.scala добавлена функция:
 
 ```scala
@@ -49,15 +50,17 @@
     // start the data generator
     val fares = env.addSource(fareSourceOrTest(new TaxiFareSource(input, maxDelay, speed)))
 
-    // max tip total in each hour
+    // максимальная сумма чаевых за час
     val hourlyMax = fares
       .map(fare => (fare.driverId, fare.tip))
-      // key by driver id
+      
+      // ключ по Id водителя
       .keyBy(_._1)
       // convert to window stream
       .timeWindow(Time.hours(1))
       .reduce(
-        // calculate total tips
+        
+        // общее количество всех чаевых
         (f1, f2) => {
           (f1._1, f1._2 + f2._2)
         },
@@ -65,11 +68,7 @@
       )
       .timeWindowAll(Time.hours(1))
       .maxBy(2)
-
-    // print result on stdout
-    printOrTest(hourlyMax)
-
-    // execute the transformation pipeline
+        
     env.execute("Hourly Tips (scala)")
   }
 
