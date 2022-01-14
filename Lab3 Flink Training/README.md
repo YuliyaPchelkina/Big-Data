@@ -128,7 +128,8 @@
 ### 4. ExpiringStateExercise
 
 Цель этого упражнения — обогатить TaxiRides информацией о тарифах.
-В ExpiringStateExercise.scala было изменено описание класса EnrichmentFunction:
+
+В файл ExpiringStateExercise.scala было изменено описание класса EnrichmentFunction:
 
 ```scala
   class EnrichmentFunction extends KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)] {
