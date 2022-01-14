@@ -71,25 +71,63 @@ object ExpiringStateExercise {
 
     env.execute("ExpiringState (scala)")
   }
+// начало изменений кода
+ 
+class EnrichmentFunction extends KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)] {
+    lazy val rideState: ValueState[TaxiRide] = getRuntimeContext.getState(
+      new ValueStateDescriptor[TaxiRide]("ride", classOf[TaxiRide]))
+    lazy val fareState: ValueState[TaxiFare] = getRuntimeContext.getState(
+      new ValueStateDescriptor[TaxiFare]("fare", classOf[TaxiFare]))
 
-  class EnrichmentFunction extends KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)] {
-
+    // вызывается для каждого элемента из потока всех поездок
     override def processElement1(ride: TaxiRide,
                                  context: KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)]#Context,
                                  out: Collector[(TaxiRide, TaxiFare)]): Unit = {
-
-      throw new MissingSolutionException()
+      val fare = fareState.value
+      // все, кроме нулевых тарифов
+      if (fare != null) {
+        context.timerService.deleteEventTimeTimer(ride.getEventTime)
+        out.collect((ride, fare))
+        fareState.clear()
+      }
+      else {
+        rideState.update(ride)
+        context.timerService.registerEventTimeTimer(ride.getEventTime)
+      }
     }
 
+    // вызывается для каждого элемента из потока всех тарифов
     override def processElement2(fare: TaxiFare,
                                  context: KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)]#Context,
                                  out: Collector[(TaxiRide, TaxiFare)]): Unit = {
+      val ride = rideState.value
+      // все, кроме нулевых поездок
+      if (ride != null) {
+        context.timerService.deleteEventTimeTimer(ride.getEventTime)
+        out.collect((ride, fare))
+        rideState.clear()
+      }
+      else {
+        fareState.update(fare)
+        context.timerService.registerEventTimeTimer(fare.getEventTime)
+      }
     }
 
+    // Вызавается при срабатывании таймера TimerService
     override def onTimer(timestamp: Long,
                          ctx: KeyedCoProcessFunction[Long, TaxiRide, TaxiFare, (TaxiRide, TaxiFare)]#OnTimerContext,
                          out: Collector[(TaxiRide, TaxiFare)]): Unit = {
+      if (fareState.value != null) {
+        ctx.output(unmatchedFares, fareState.value)
+        fareState.clear()
+      }
+      if (rideState.value != null) {
+        ctx.output(unmatchedRides, rideState.value)
+        rideState.clear()
+      }
     }
   }
+
+ // конец изменений кода
 
 }
