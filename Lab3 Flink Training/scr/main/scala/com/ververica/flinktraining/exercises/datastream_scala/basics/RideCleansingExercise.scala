@@ -50,6 +50,14 @@ object RideCleansingExercise extends ExerciseBase {
     // get the taxi ride data stream
     val rides = env.addSource(rideSourceOrTest(new TaxiRideSource(input, maxDelay, speed)))
 
+    // функция, проверяющая попадают ли данные поездки в область, ограниченную координатами Нью-Йорка
+    def NewY(lon: Float, lat: Float) = !(lon > -73.7 || lon < -74.05) && !(lat > 41.0 || lat < 40.5)
+
+    val FilterRides = rides
+      // отфильтровываем лишние поездки 
+      .filter(ride => NewY(ride.startLon, ride.startLat) && NewY(ride.endLon, ride.endLat))
+    
+    
     val filteredRides = rides
       // filter out rides that do not start and end in NYC
       .filter(ride => throw new MissingSolutionException)
